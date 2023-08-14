@@ -13,7 +13,7 @@ RUN rm -rf ./etc
 RUN ls
 RUN pwd
 
-COPY ./root/ .
+COPY root/ .
 
 VOLUME /config /data
 
