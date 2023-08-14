@@ -10,7 +10,7 @@ RUN apt-get --assume-yes update && apt-get --assume-yes install librrds-perl rrd
 RUN ./release-smokeping.sh
 RUN rm -rf ./etc
 
-COPY root/ .
+COPY ./root/ .
 
 VOLUME /config /data
 
