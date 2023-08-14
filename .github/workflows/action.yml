@@ -7,7 +7,7 @@ on:
   # commented to not be triggered on each commit
   #   # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: ["main", "Dev"]
+    branches: ["main", "master", "Dev"]
   #   pull_request:
   #     branches: [ "main" ]
 
