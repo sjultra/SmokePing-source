@@ -49,8 +49,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
-          context: ./docker/speedtest
-          file: ./docker/speedtest/Dockerfile
+          context: ./docker
+          file: ./docker/Dockerfile
           push: true
           tags: |
             sjultra/smokeping:latest
