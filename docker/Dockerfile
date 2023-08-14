@@ -10,14 +10,15 @@ RUN apt-get --assume-yes update && apt-get --assume-yes install librrds-perl rrd
 RUN ./release-smokeping.sh
 RUN rm -rf ./etc
 
+RUN ls
+RUN pwd
+
 COPY ./root/ .
 
 VOLUME /config /data
 
 EXPOSE 80
 
-RUN ls
-RUN pwd
 
 CMD ["./bin/smokeping --config ../etc/smokeping/config"]
 
