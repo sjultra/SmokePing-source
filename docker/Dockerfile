@@ -19,8 +19,9 @@ VOLUME /config /data
 
 EXPOSE 80
 
+RUN pwd && ls && ls ./etc && ls ./etc/smokeping
 
-CMD ["./bin/smokeping --config ../etc/smokeping/config"]
+CMD ["./bin/smokeping --config etc/smokeping/config"]
 
 
 # # FINAL IMAGE
