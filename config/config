@@ -1,0 +1,111 @@
+*** General ***
+owner    = Atetux
+contact  = hello.darling@atetux.com
+mailhost = my.mail.host
+imgcache = /usr/local/smokeping/cache
+imgurl   = cache
+datadir  = /usr/local/smokeping/data
+piddir  = /usr/local/smokeping/var
+cgiurl   = http://some.url/smokeping.cgi
+smokemail = /usr/local/smokeping/etc/smokemail.dist
+tmail = /usr/local/smokeping/etc/tmail.dist
+syslogfacility = smokeping
+ 
+*** Alerts ***
+to = alertee@address.somewhere
+from = smokealert@company.xy
++someloss
+type = loss
+pattern = >0%,*12*,>0%,*12*,>0%
+comment = loss 3 times  in a row
+ 
+*** Database ***
+step     = 300
+pings    = 20
+AVERAGE  0.5   1  1008
+AVERAGE  0.5  12  4320
+    MIN  0.5  12  4320
+    MAX  0.5  12  4320
+AVERAGE  0.5 144   720
+    MAX  0.5 144   720
+    MIN  0.5 144   720
+ 
+*** Presentation ***
+template = /usr/local/smokeping/etc/basepage.html.dist
+charset  = utf-8
+ 
++ charts
+ 
+menu = Charts
+title = The most interesting destinations
+ 
+++ stddev
+sorter = StdDev(entries=>4)
+title = Top Standard Deviation
+menu = Std Deviation
+format = Standard Deviation %f
+ 
+++ max
+sorter = Max(entries=>5)
+title = Top Max Roundtrip Time
+menu = by Max
+format = Max Roundtrip Time %f seconds
+ 
+++ loss
+sorter = Loss(entries=>5)
+title = Top Packet Loss
+menu = Loss
+format = Packets Lost %f
+ 
+++ median
+sorter = Median(entries=>5)
+title = Top Median Roundtrip Time
+menu = by Median
+format = Median RTT %f seconds
+ 
++ overview 
+ 
+width = 600
+height = 50
+range = 10h
+ 
++ detail
+ 
+width = 600
+height = 200
+unison_tolerance = 2
+ 
+"Last 3 Hours"    3h
+"Last 30 Hours"   30h
+"Last 10 Days"    10d
+"Last 360 Days"   360d
+ 
+ 
+*** Probes ***
++ FPing
+binary = /usr/bin/fping
+ 
+*** Targets ***
+probe = FPing
+menu = Top
+title = Network Latency Grapher
+remark = Welcome to the SmokePing atetux.com
+ 
++ SearchEngine
+menu = Search-Engine
+title = Search Engine
+ 
+++ Google
+menu = Google
+title = google.com
+host = google.com
+ 
+++ Bing
+menu = Bing
+title = Bing.com
+host = bing.com
+ 
+++ DuckDuckGo
+menu = DuckDuckGo
+title = DuckDuckGo.com
+host = duckduckgo.com

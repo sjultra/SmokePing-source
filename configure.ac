@@ -22,7 +22,7 @@ AC_PREREQ([2.59])
 AC_CONFIG_AUX_DIR(conftools)
 
 # need this to allow long path names
-AM_INIT_AUTOMAKE([1.9 tar-ustar foreign])
+# AM_INIT_AUTOMAKE([1.9 tar-ustar foreign])
 
 AC_PREFIX_DEFAULT(/opt/$PACKAGE_NAME-$PACKAGE_VERSION)
 
