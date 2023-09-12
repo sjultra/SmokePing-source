@@ -12,20 +12,25 @@ ARG DEBIAN_FRONTEND=noninteractive
 # RUN cat /etc/hostname
 RUN echo "**** install packages ****"
 RUN apt update && apt upgrade -y
-RUN apt-get install -y --no-install-recommends gcc make libwww-perl libcgi-fast-perl libtext-soundex-perl libio-pty-perl libcrypt-ssleay-perl rrdtool librrds-perl libssl-dev libc6-dev wget automake autoconf libtool fping pkg-config
+RUN apt-get install -y --no-install-recommends gcc make libwww-perl libcgi-fast-perl libtext-soundex-perl libio-pty-perl libcrypt-ssleay-perl rrdtool librrds-perl libssl-dev libc6-dev wget automake autoconf libtool fping pkg-config dma shtool
 RUN apt install -y apache2 libapache2-mod-fcgid
 
 # copy thirdparty independently
 # COPY . .
 RUN echo "**** download Smokeping source ****"
-RUN wget https://oss.oetiker.ch/smokeping/pub/smokeping-2.8.2.tar.gz
-RUN tar zxf smokeping-2.8.2.tar.gz
-RUN mv smokeping-2.8.2 ./build
+# RUN wget https://oss.oetiker.ch/smokeping/pub/smokeping-2.8.2.tar.gz
+# RUN tar zxf smokeping-2.8.2.tar.gz
+# RUN mv smokeping-2.8.2 ./build
+COPY . /build
 
+RUN echo "bust cache"
 
 RUN echo "**** install Smokeping from source ****"
 WORKDIR /build
-RUN LC_ALL=C ./configure --prefix=/usr/local/smokeping
+RUN autoreconf -i
+RUN ./bootstrap
+RUN ./configure --prefix=/usr/local/smokeping
+# RUN LC_ALL=C ./configure --prefix=/usr/local/smokeping
 RUN make install
 
 RUN echo "**** configure Smokeping ****"
@@ -41,18 +46,25 @@ RUN chown www-data:www-data -R /usr/local/smokeping
 RUN chmod 777 /usr/local/smokeping
 COPY ./config/smokeping.conf /etc/apache2/conf-available/smokeping.conf
 
-RUN /usr/local/smokeping/bin/smokeping --config /usr/local/smokeping/etc/config
+# RUN /usr/local/smokeping/bin/smokeping --config /usr/local/smokeping/etc/config
 
 # RUN service apache2 start
+
 RUN a2enconf smokeping
 RUN a2enmod cgi
+
 # RUN service apache2 start
 # RUN /etc/init.d/apache2 start
 # RUN /etc/init.d/apache2 reload
 # RUN apache2ctl start
 # RUN apachectl start
 # RUN service apache2 reload
+
 # RUN service apache2 restart
+# RUN systemctl start apache2
+# RUN service apache2 start && \
+#     service apache2 status && \
+#     /etc/init.d/apache2 reload
 
 
 
@@ -63,13 +75,16 @@ RUN a2enmod cgi
 
 EXPOSE 80
 
-CMD ["apache2ctl", "-D", "FOREGROUND"]
+# CMD ["apache2ctl", "-D", "FOREGROUND;", "/usr/local/smokeping/bin/smokeping", "--config", "/usr/local/smokeping/etc/config", "--nodaemon"]
 # RUN /usr/local/smokeping/bin/smokeping --config /usr/local/smokeping/etc/config
 # CMD ["apache2ctl", "-D", "FOREGROUND"]
 
 
 # CMD ["systemctl", "start", "smokeping"]
 # CMD ["/usr/local/smokeping/bin/smokeping", "--config", "/usr/local/smokeping/etc/config", "--nodaemon"]
+COPY init.sh .
+RUN chmod +x init.sh
+ENTRYPOINT ["./init.sh"]
 # CMD ["/usr/local/smokeping/bin/smokeping", "--config", "/usr/local/smokeping/etc/config", "--nodaemon", "--debug-daemon"]
 
 # RUN /usr/local/smokeping/bin/smokeping --version
