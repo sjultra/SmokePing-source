@@ -26,8 +26,8 @@ use Data::Dumper;
 use MIME::Base64;
 # optional dependencies
 # will be imported in case InfluxDB host is configured
-# InfluxDB::HTTP
-# InfluxDB::LineProtocol
+use InfluxDB::HTTP;
+use InfluxDB::LineProtocol;
 
 setlogsock('unix')
    if grep /^ $^O $/xo, ("linux", "openbsd", "freebsd", "netbsd");
@@ -2275,14 +2275,14 @@ sub update_influxdb($$$$$) {
         }
     } 
 
-    #do_debuglog("DBG: idata:".Dumper(\%idata).", itags:".Dumper(\%itags));
+    do_debuglog("DBG: idata:".Dumper(\%idata).", itags:".Dumper(\%itags));
     #convert unixtimestamp from seconds to ms (since rrd have only second precision)
     $unixtimestamp = $unixtimestamp."000"; #avoid a multiply
 
     push @influx_data, data2line( $tree->{probe}, \%idata, \%itags, $unixtimestamp);
 
     if(defined $influx){
-        #do_debuglog("DBG: About to insert to influxdb: ".Dumper(\@influx_data));
+        do_debuglog("DBG: About to insert to influxdb: ".Dumper(\@influx_data));
         my $insert = $influx->write(
             \@influx_data,
             database => $cfg->{InfluxDB}{'database'},

@@ -20,3 +20,11 @@ thirdparty/*
 !thirdparty/Makefile.am
 *-*.*.*/
 *.gz
+
+data/
+/influxdb/
+/grafana/dashboards/*
+!/grafana/dashboards/smokeping.json
+!/grafana/dashboards/dashboard.yml
+/grafana/datasources/*
+!/grafana/datasources/influxdb.yml

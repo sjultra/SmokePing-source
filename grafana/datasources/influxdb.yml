@@ -1,0 +1,16 @@
+apiVersion: 1
+
+deleteDatasources:
+  - name: InfluxDB
+
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    user: admin
+    url: http://influxdb:8086
+    jsonData:
+      dbName: smokeping
+      httpMode: GET
+    secureJsonData:
+      password: password

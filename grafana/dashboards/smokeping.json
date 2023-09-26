@@ -1,0 +1,654 @@
+{
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "6.6.2"
+    },
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": 12459,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1591948365693,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "InfluxDB",
+      "description": "",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "hideZero": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 3,
+      "links": [],
+      "maxPerRow": 2,
+      "nullPointMode": "connected",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "repeat": "slave",
+      "repeatDirection": "h",
+      "seriesOverrides": [
+        {
+          "alias": "min",
+          "fill": 0,
+          "steppedLine": true
+        },
+        {
+          "alias": "avg",
+          "color": "#FFCB7D",
+          "fillBelowTo": "min",
+          "lines": true,
+          "linewidth": 4,
+          "steppedLine": true
+        },
+        {
+          "alias": "max",
+          "color": "#FA6400",
+          "fillBelowTo": "avg",
+          "steppedLine": true
+        },
+        {
+          "alias": "loss",
+          "bars": true,
+          "color": "#C4162A",
+          "lines": false,
+          "pointradius": 1,
+          "points": true,
+          "yaxis": 2
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": true,
+      "targets": [
+        {
+          "alias": "min",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "host"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "measurement": "/^$measurement_type$/",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT min(\"min\") FROM \"$measurement_type\" WHERE (slave=~/$slave/ and connection_type =~/$connection_type/ and content_provider=~/$content_provider/ and host=~/$host/ ) AND $timeFilter GROUP BY time($__interval), \"slave\" fill(null)",
+          "rawQuery": true,
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "min"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "min"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "path",
+              "operator": "=~",
+              "value": "/^$path$/"
+            }
+          ]
+        },
+        {
+          "alias": "avg",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "host"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "/^$measurement_type$/",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"median\") FROM \"$measurement_type\" WHERE  (slave=~/$slave/ and connection_type =~/$connection_type/ and content_provider=~/$content_provider/ and host=~/$host/ ) AND $timeFilter GROUP BY time($__interval), \"slave\" fill(null)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "median"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "path",
+              "operator": "=~",
+              "value": "/^$path$/"
+            }
+          ]
+        },
+        {
+          "alias": "max",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "host"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "/^$measurement_type$/",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT max(\"max\") FROM \"$measurement_type\" WHERE  (slave=~/$slave/ and connection_type =~/$connection_type/ and content_provider=~/$content_provider/ and host=~/$host/) AND $timeFilter GROUP BY time($__interval), \"slave\" fill(null)",
+          "rawQuery": true,
+          "refId": "C",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "max"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "path",
+              "operator": "=~",
+              "value": "/^$path$/"
+            }
+          ]
+        },
+        {
+          "alias": "loss",
+          "groupBy": [
+            {
+              "params": [
+                "$__interval"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "host"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "/^$measurement_type$/",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT mean(\"loss_percent\") FROM \"$measurement_type\" WHERE  (slave=~/$slave/ and connection_type =~/$connection_type/ and content_provider=~/$content_provider/ and host=~/$host/) AND $timeFilter GROUP BY time($__interval), \"slave\" fill(null)",
+          "rawQuery": true,
+          "refId": "D",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "loss_percent"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "path",
+              "operator": "=~",
+              "value": "/^$path$/"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "$measurement_type on $slave for $content_provider",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "transparent": true,
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "s",
+          "label": "Delay",
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        },
+        {
+          "format": "percent",
+          "label": "Loss",
+          "logBase": 1,
+          "max": null,
+          "min": "0",
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 22,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "InfluxDB",
+        "definition": "show measurements",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Measurement type",
+        "multi": false,
+        "name": "measurement_type",
+        "options": [],
+        "query": "show measurements",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": "InfluxDB",
+        "definition": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"slave\";",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Slave",
+        "multi": true,
+        "name": "slave",
+        "options": [],
+        "query": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"slave\";",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": "InfluxDB",
+        "definition": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"connection_type\"; ",
+        "hide": 2,
+        "includeAll": true,
+        "label": "Connection type",
+        "multi": false,
+        "name": "connection_type",
+        "options": [],
+        "query": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"connection_type\"; ",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": "InfluxDB",
+        "definition": " SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"content_provider\"; ",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Content Provider",
+        "multi": false,
+        "name": "content_provider",
+        "options": [],
+        "query": " SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"content_provider\"; ",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": "InfluxDB",
+        "definition": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"download\"; ",
+        "hide": 2,
+        "includeAll": true,
+        "label": "Download",
+        "multi": false,
+        "name": "download",
+        "options": [],
+        "query": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"download\"; ",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": "InfluxDB",
+        "definition": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"host\"; ",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Host",
+        "multi": false,
+        "name": "host",
+        "options": [],
+        "query": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"host\"; ",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": "InfluxDB",
+        "definition": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"loss\"; ",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Loss",
+        "multi": false,
+        "name": "loss",
+        "options": [],
+        "query": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"loss\"; ",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": "InfluxDB",
+        "definition": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"loss_percent\"; ",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Loss percent",
+        "multi": false,
+        "name": "loss_percent",
+        "options": [],
+        "query": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"loss_percent\"; ",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": "InfluxDB",
+        "definition": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"modem\"; ",
+        "hide": 2,
+        "includeAll": true,
+        "label": "Modem",
+        "multi": false,
+        "name": "modem",
+        "options": [],
+        "query": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"modem\"; ",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": "InfluxDB",
+        "definition": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"service\"; ",
+        "hide": 2,
+        "includeAll": true,
+        "label": "Service",
+        "multi": false,
+        "name": "service",
+        "options": [],
+        "query": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"service\"; ",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": ".*",
+        "current": {},
+        "datasource": "InfluxDB",
+        "definition": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"upload\"; ",
+        "hide": 2,
+        "includeAll": true,
+        "label": "Upload",
+        "multi": false,
+        "name": "upload",
+        "options": [],
+        "query": "SHOW TAG VALUES from \"$measurement_type\" WITH KEY = \"upload\"; ",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "Smokeping (generic)",
+  "uid": "g-aB95fWz",
+  "version": 33,
+  "description": "Display SmokePing measurements"
+}
