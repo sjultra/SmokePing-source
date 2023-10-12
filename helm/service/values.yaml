@@ -16,5 +16,5 @@ grafana:
 
 smokeping:
   image: sjultra/smokeping:latest
-  port: 8080
+  port: 3000
 

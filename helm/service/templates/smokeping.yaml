@@ -30,5 +30,5 @@ spec:
   ports:
     - protocol: TCP
       port: {{ .Values.smokeping.port }}
-      targetPort: 3000
+      targetPort: 8080
 
