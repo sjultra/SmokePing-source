@@ -1,0 +1,21 @@
+# Default values for Smokeping.
+# Update these values according to your requirements.
+ingressHost: https://kubernetes.default.svc
+
+influxdb:
+  image: sjultra/influxdb-legacy:latest
+  adminUser: admin
+  adminPassword: password
+  db: smokeping
+
+grafana:
+  image: grafana/grafana:10.1.2
+  adminPassword: admin
+  ROOTURL: "https://kubernetes.default.svc/api/v1/namespaces/smokeping/services/http:grafana:80/proxy/?orgId=1"
+  port: 80
+
+smokeping:
+  image: sjultra/smokeping:latest
+  interval: 60
+  host: ""
+

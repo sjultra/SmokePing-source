@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smokeping
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smokeping
+  template:
+    metadata:
+      labels:
+        app: smokeping
+    spec:
+      initContainers:
+        - name: influxdb-wait
+          image: busybox:1.34.0
+          command: ["sh", "-c", "until nslookup influxdb; do sleep 2; done"]
+      containers:
+        - name: smokeping
+          image: {{ .Values.smokeping.image }}

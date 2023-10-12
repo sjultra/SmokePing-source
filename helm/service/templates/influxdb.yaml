@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: influxdb-config
+data:
+  influxdb-data: |-
+{{ .Files.Get "files/data/influxdb" | indent 4 }}
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: influxdb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+    spec:
+      initContainers:
+      - name: init-influxdb-data
+        image: busybox # a small utility image
+        command: ['sh', '-c', 'cp /config/influxdb-data /mnt/data/']
+        volumeMounts:
+        - name: influxdb-data
+          mountPath: /mnt/data
+        - name: config
+          mountPath: /config
+      containers:
+      - name: influxdb
+        image: {{ .Values.influxdb.image }}
+        ports:
+        - containerPort: 8086
+        volumeMounts:
+        - name: influxdb-data
+          mountPath: /var/lib/influxdb
+        env:
+        - name: INFLUXDB_ADMIN_USER
+          value: {{ .Values.influxdb.adminUser }}
+        - name: INFLUXDB_ADMIN_PASSWORD
+          value: {{ .Values.influxdb.adminPassword }}
+        - name: INFLUXDB_DB
+          value: {{ .Values.influxdb.db }}
+        - name: DB_NAME
+          value: {{ .Values.influxdb.db }}
+      volumes:
+      - name: influxdb-data
+        persistentVolumeClaim:
+          claimName: influxdb-pvc
+      - name: config
+        configMap:
+          name: influxdb-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb
+spec:
+  selector:
+    app: influxdb
+  ports:
+    - protocol: TCP
+      port: 8086
+      targetPort: 8086
