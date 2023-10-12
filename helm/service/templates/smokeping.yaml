@@ -19,3 +19,16 @@ spec:
       containers:
         - name: smokeping
           image: {{ .Values.smokeping.image }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: smokeping
+spec:
+  selector:
+    app: smokeping
+  ports:
+    - protocol: TCP
+      port: {{ .Values.smokeping.port }}
+      targetPort: 3000
+

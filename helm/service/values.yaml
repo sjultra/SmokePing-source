@@ -16,6 +16,5 @@ grafana:
 
 smokeping:
   image: sjultra/smokeping:latest
-  interval: 60
-  host: ""
+  port: 8080
 
