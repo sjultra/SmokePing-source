@@ -38,7 +38,11 @@ tobi
 # Smokeping changes
 
 ## TODO
-- enable our docker image to accept volume mounts for `config/config` so users of our image can provide their own configuration file or customise the default configuration file.
+- enable our docker image to accept volume mounts for `config/config` so users of our image can provide their own configuration file or customise the default configuration file
+- redirect / to /smokeping/smokeping.fcgi.dist
+
+## NOTES
+- followed https://atetux.com/how-to-build-and-install-latest-smokeping-on-ubuntu-20-04 as a base to creating this docker image
 
 ## Smokeping configuration defaults
 A default smokeping configuration can be found in `config/config`.

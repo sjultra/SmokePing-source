@@ -37,6 +37,7 @@ RUN echo "**** configure Smokeping GUI ****"
 RUN chown www-data:www-data -R /usr/local/smokeping
 RUN chmod 777 /usr/local/smokeping
 COPY ./config/smokeping.conf /etc/apache2/conf-available/smokeping.conf
+VOLUME /etc/apache2/conf-available
 
 RUN a2enconf smokeping
 RUN a2enmod cgi

@@ -1,0 +1,17 @@
+{{- if .Values.issuer }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: smokeping-issuer
+  namespace: smokeping
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: {{ .Values.issuer.issuerEmail }}
+    privateKeySecretRef:
+      name: {{ .Values.issuer.privateKeyName }}
+    solvers:
+    - http01:
+        ingress:
+          class: traefik
+{{- end }}

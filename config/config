@@ -1,6 +1,6 @@
 *** General ***
-owner    = Atetux
-contact  = hello.darling@atetux.com
+owner    = sjultra
+contact  = alex+smokeping.ops@sjultra.com
 mailhost = my.mail.host
 imgcache = /usr/local/smokeping/cache
 imgurl   = cache

@@ -7,6 +7,7 @@ services:
       dockerfile: ./docker/Dockerfile
     volumes:
       - ./config/config:/usr/local/smokeping/etc/config
+      - ./config/smokeping.conf:/etc/apache2/conf-available/smokeping.conf
       - ./data:/data
     ports:
       - 8080:80

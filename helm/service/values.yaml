@@ -18,3 +18,10 @@ smokeping:
   image: sjultra/smokeping:latest
   port: 8080
 
+issuer:
+  issuerEmail: ops@sjultra.com
+  secretName: smokeping-tls-prod
+  privateKeyName: smokeping-tls-pkey-prod
+
+ingress:
+  ingressDomain: smokepingkube.vzxy.net
