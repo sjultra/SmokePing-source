@@ -12,10 +12,12 @@ spec:
       labels:
         app: smokeping
     spec:
+      {{ if .Values.influxdb.create }}
       initContainers:
         - name: influxdb-wait
           image: busybox:1.34.0
           command: ["sh", "-c", "until nslookup influxdb; do sleep 2; done"]
+      {{ end }}
       containers:
         - name: smokeping
           image: {{ .Values.smokeping.image }}

@@ -10,14 +10,6 @@ cgiurl   = http://some.url/smokeping.cgi
 smokemail = /usr/local/smokeping/etc/smokemail.dist
 tmail = /usr/local/smokeping/etc/tmail.dist
 syslogfacility = smokeping
-
-*** InfluxDB ***
-host = influxdb:8086
-database = smokeping
-timeout = 10
-port = 8086
-username = admin
-password = password
  
 *** Alerts ***
 to = alertee@address.somewhere

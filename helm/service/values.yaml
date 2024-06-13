@@ -3,12 +3,14 @@
 ingressHost: https://kubernetes.default.svc
 
 influxdb:
+  create: false
   image: sjultra/influxdb-legacy:latest
   adminUser: admin
   adminPassword: password
   db: smokeping
 
 grafana:
+  create: false
   image: grafana/grafana:10.1.2
   adminPassword: admin
   ROOTURL: "https://kubernetes.default.svc/api/v1/namespaces/smokeping/services/http:grafana:80/proxy/?orgId=1"
@@ -24,4 +26,4 @@ issuer:
   privateKeyName: smokeping-tls-pkey-prod
 
 ingress:
-  ingressDomain: smokepingkube.vzxy.net
+  ingressDomain: smokeping.yourdomain.com

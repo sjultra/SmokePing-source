@@ -1,3 +1,4 @@
+{{ if .Values.grafana.create }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -52,4 +53,4 @@ spec:
     - protocol: TCP
       port: {{ .Values.grafana.port }}
       targetPort: 3000
-
+{{ end }}
