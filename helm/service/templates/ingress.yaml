@@ -4,7 +4,7 @@ metadata:
   name: smokeping-ingress
   annotations:
     kubernetes.io/ingress.class: "traefik"
-    cert-manager.io/issuer: "smokeping-issuer"
+    # cert-manager.io/issuer: "smokeping-issuer"
     traefik.ingress.kubernetes.io/redirect-entry-point: "https"
 spec:
   rules:
@@ -15,10 +15,10 @@ spec:
               service:
                 name: smokeping
                 port:
-                  number: 80
+                  number: 8080
             path: /
             pathType: Prefix
-  tls:
-    - hosts:
-      - {{ .Values.ingress.ingressDomain }}
-      secretName: {{ .Values.issuer.secretName }}
+  # tls:
+  #   - hosts:
+  #     - {{ .Values.ingress.ingressDomain }}
+  #     secretName: {{ .Values.issuer.secretName }}
