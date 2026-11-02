@@ -1,7 +1,7 @@
 # Builds the sjultra/smokeping image and pushes it to Docker Hub.
 # Runs on push to main, master, or Dev, or manual dispatch.
 
-name: "[E-STALE] Build and Push Smokeping Docker Image"
+name: "Build and Push Smokeping Docker Image"
 
 # Controls when the workflow will run
 on:
