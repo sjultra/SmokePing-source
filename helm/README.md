@@ -1,9 +1,7 @@
 ```
-helm package smokeping
-
+helm package helm/service
 ```
 
-
 ```
-helm install smokeping smokeping-0.1.0.tgz --create-namespace --namespace smokeping
+helm install smokeping smokeping-<version>.tgz --create-namespace --namespace smokeping
 ```

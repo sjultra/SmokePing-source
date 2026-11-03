@@ -1,29 +1,53 @@
 # Default values for Smokeping.
 # Update these values according to your requirements.
-ingressHost: https://kubernetes.default.svc
 
 influxdb:
   create: false
-  image: sjultra/influxdb-legacy:latest
+  image:
+    repository: influxdb
+    tag: "1.8.10"                         # pinned (not `latest`)
+    pullPolicy: IfNotPresent
   adminUser: admin
   adminPassword: password
-  db: smokeping
+  db: smokeping                           # created on first start
+
+  # deployment target(s)
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  affinity: {}
+  tolerations: []
 
 grafana:
   create: false
-  image: grafana/grafana:10.1.2
+  image:
+    repository: grafana/grafana
+    tag: "10.1.2"                         # pinned (not `latest`)
+    pullPolicy: IfNotPresent
   adminPassword: admin
-  ROOTURL: "https://kubernetes.default.svc/api/v1/namespaces/smokeping/services/http:grafana:80/proxy/?orgId=1"
-  port: 80
+  rootUrl: ""                             # set only if Grafana must know its public URL; unset, it works at any URL
+
+  # deployment target(s)
+  nodeSelector:
+    kubernetes.io/arch: amd64
+  affinity: {}
+  tolerations: []
 
 smokeping:
-  image: sjultra/smokeping:latest
-  port: 8080
+  image:
+    repository: sjultra/smokeping
+    tag: ""                               # defaults to the chart's appVersion; set only to override
+    pullPolicy: IfNotPresent
+  service:
+    nodePort: 30083                       # LAN access: http://<any-node-ip>:30083
+  ingress:
+    enabled: false                        # true = public at https://<host>; TLS is terminated by nginx on the proxy host
+    host: ""                              # required when enabled
+  persistence:                            # /data: the latency history (RRD files); survives pod restarts
+    storageClass: ""                      # the cluster's default
+    size: 1Gi
 
-issuer:
-  issuerEmail: ops@sjultra.com
-  secretName: smokeping-tls-prod
-  privateKeyName: smokeping-tls-pkey-prod
-
-ingress:
-  ingressDomain: smokeping.yourdomain.com
+  # deployment target(s)
+  nodeSelector:
+    kubernetes.io/arch: amd64             # the image is amd64-only
+  affinity: {}
+  tolerations: []

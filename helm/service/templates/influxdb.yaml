@@ -1,13 +1,4 @@
-{{ if .Values.influxdb.create }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: influxdb-config
-data:
-  influxdb-data: |-
-{{ .Files.Get "files/data/influxdb" | indent 4 }}
-
----
+{{- if .Values.influxdb.create }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -26,6 +17,8 @@ metadata:
   name: influxdb
 spec:
   replicas: 1
+  strategy:
+    type: Recreate          # one data directory on a single-node volume: never two pods at once
   selector:
     matchLabels:
       app: influxdb
@@ -34,18 +27,22 @@ spec:
       labels:
         app: influxdb
     spec:
-      initContainers:
-      - name: init-influxdb-data
-        image: busybox # a small utility image
-        command: ['sh', '-c', 'cp /config/influxdb-data /mnt/data/']
-        volumeMounts:
-        - name: influxdb-data
-          mountPath: /mnt/data
-        - name: config
-          mountPath: /config
+      {{- with .Values.influxdb.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.influxdb.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.influxdb.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - name: influxdb
-        image: {{ .Values.influxdb.image }}
+        image: "{{ .Values.influxdb.image.repository }}:{{ .Values.influxdb.image.tag }}"
+        imagePullPolicy: {{ .Values.influxdb.image.pullPolicy }}
         ports:
         - containerPort: 8086
         volumeMounts:
@@ -53,20 +50,15 @@ spec:
           mountPath: /var/lib/influxdb
         env:
         - name: INFLUXDB_ADMIN_USER
-          value: {{ .Values.influxdb.adminUser }}
+          value: "{{ .Values.influxdb.adminUser }}"
         - name: INFLUXDB_ADMIN_PASSWORD
-          value: {{ .Values.influxdb.adminPassword }}
+          value: "{{ .Values.influxdb.adminPassword }}"
         - name: INFLUXDB_DB
-          value: {{ .Values.influxdb.db }}
-        - name: DB_NAME
-          value: {{ .Values.influxdb.db }}
+          value: "{{ .Values.influxdb.db }}"
       volumes:
       - name: influxdb-data
         persistentVolumeClaim:
           claimName: influxdb-pvc
-      - name: config
-        configMap:
-          name: influxdb-config
 ---
 apiVersion: v1
 kind: Service
@@ -79,5 +71,4 @@ spec:
     - protocol: TCP
       port: 8086
       targetPort: 8086
-
-{{ end }}
+{{- end }}

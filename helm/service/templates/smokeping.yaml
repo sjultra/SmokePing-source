@@ -4,6 +4,8 @@ metadata:
   name: smokeping
 spec:
   replicas: 1
+  strategy:
+    type: Recreate          # one data directory on a single-node volume: never two pods at once
   selector:
     matchLabels:
       app: smokeping
@@ -12,25 +14,90 @@ spec:
       labels:
         app: smokeping
     spec:
-      {{ if .Values.influxdb.create }}
+      {{- with .Values.smokeping.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.smokeping.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.smokeping.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.influxdb.create }}
       initContainers:
         - name: influxdb-wait
           image: busybox:1.34.0
+          imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "until nslookup influxdb; do sleep 2; done"]
-      {{ end }}
+      {{- end }}
       containers:
         - name: smokeping
-          image: {{ .Values.smokeping.image }}
+          image: "{{ .Values.smokeping.image.repository }}:{{ .Values.smokeping.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.smokeping.image.pullPolicy }}
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: smokeping-data
+              mountPath: /data            # the RRD files behind the graphs (`datadir` in config/config)
+      volumes:
+        - name: smokeping-data
+          persistentVolumeClaim:
+            claimName: smokeping-data
+
+---
+# deleted with the release: uninstalling deletes the latency history
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: smokeping-data
+  labels:
+    app: smokeping
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- with .Values.smokeping.persistence.storageClass }}
+  storageClassName: {{ . }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.smokeping.persistence.size }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: smokeping
 spec:
+  type: NodePort
   selector:
     app: smokeping
   ports:
-    - protocol: TCP
-      port: {{ .Values.smokeping.port }}
+    - name: http          # LAN access at http://<node-ip>:<nodePort>; public traffic goes nginx → Traefik → Ingress
+      protocol: TCP
+      port: 80
       targetPort: 80
+      nodePort: {{ .Values.smokeping.service.nodePort }}
+{{- if .Values.smokeping.ingress.enabled }}
 
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: smokeping
+  annotations:
+    kubernetes.io/ingress.class: "traefik"  # TLS is terminated by nginx on the proxy host, which forwards to Traefik
+spec:
+  rules:
+    - host: {{ required "smokeping.ingress.host is required when smokeping.ingress.enabled is true" .Values.smokeping.ingress.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: smokeping
+                port:
+                  number: 80
+{{- end }}

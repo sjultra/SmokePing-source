@@ -17,14 +17,13 @@ services:
       - "grafana"
 
   influxdb:
-    image: sjultra/influxdb-legacy:latest
+    image: influxdb:1.8.10
     environment:
       - INFLUXDB_ADMIN_USER=admin
       - INFLUXDB_ADMIN_PASSWORD=password
-      - DB_NAME=smokeping
+      - INFLUXDB_DB=smokeping
     volumes:
-      - ./influxdb/data:/var/lib/influxdb2
-      - ./influxdb/config:/etc/influxdb2
+      - ./influxdb/data:/var/lib/influxdb
     ports:
       - 8086:8086
     restart: always

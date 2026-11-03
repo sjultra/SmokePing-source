@@ -28,3 +28,5 @@ data/
 !/grafana/dashboards/dashboard.yml
 /grafana/datasources/*
 !/grafana/datasources/influxdb.yml
+
+.DS_Store
