@@ -9,12 +9,14 @@ on:
 
 permissions:
   contents: read
+  packages: write       # GHCR push with GITHUB_TOKEN
 
 jobs:
   build:
     runs-on: ubuntu-latest
     env:
       IMAGE: sjultra/smokeping
+      GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/smokeping
     steps:
       - uses: actions/checkout@v5
 
@@ -34,22 +36,45 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # build: neither registry has it | copy: only Docker Hub does (a run that
+      # failed pushing to GHCR) | done: both do
       - name: Check version
         id: check
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          if docker manifest inspect "$IMAGE:${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
-            echo "::notice::$IMAGE:${{ steps.version.outputs.version }} is already published; bump appVersion in helm/service/Chart.yaml to publish"
-            echo "published=true" >> "$GITHUB_OUTPUT"
+          has() { docker manifest inspect "$1" >/dev/null 2>&1; }
+          if has "$IMAGE:$VERSION" && has "$GHCR_IMAGE:$VERSION"; then
+            echo "::notice::$VERSION is already published; bump appVersion in helm/service/Chart.yaml to publish"
+            echo "action=done" >> "$GITHUB_OUTPUT"
+          elif has "$IMAGE:$VERSION"; then
+            echo "action=copy" >> "$GITHUB_OUTPUT"
           else
-            echo "published=false" >> "$GITHUB_OUTPUT"
+            echo "action=build" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set up Docker Buildx
-        if: steps.check.outputs.published == 'false'
+        if: steps.check.outputs.action != 'done'
         uses: docker/setup-buildx-action@v3
 
+      # the same image, not a rebuild: both registries end up with one digest
+      - name: Copy to GHCR
+        if: steps.check.outputs.action == 'copy'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          docker buildx imagetools create -t "$GHCR_IMAGE:$VERSION" "$IMAGE:$VERSION"
+          docker buildx imagetools create -t "$GHCR_IMAGE:latest" "$IMAGE:$VERSION"
+
       - name: Build and push
-        if: steps.check.outputs.published == 'false'
+        if: steps.check.outputs.action == 'build'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -58,3 +83,5 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
             ${{ env.IMAGE }}:latest
+            ${{ env.GHCR_IMAGE }}:${{ steps.version.outputs.version }}
+            ${{ env.GHCR_IMAGE }}:latest
