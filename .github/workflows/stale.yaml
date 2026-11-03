@@ -1,7 +1,4 @@
-# Marks stale issues and pull requests.
-# Runs on schedule daily at 04:21 UTC (disabled: fork).
-
-name: "[E-OFF] Mark stale issues and pull requests"
+name: Mark stale issues and pull requests
 # https://github.com/actions/stale
 on:
   schedule:

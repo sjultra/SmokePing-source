@@ -1,12 +1,13 @@
-# Builds the sjultra/smokeping image and pushes it to Docker Hub.
-# Runs on push to main, master, or Dev, or manual dispatch.
+# This is a basic workflow to help you get started with Actions
 
-name: "[E-STALE] Build and Push Smokeping Docker Image"
+name: Build and push docker image
 
 # Controls when the workflow will run
 on:
   # commented to not be triggered on each commit
   #   # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: ["main", "master", "Dev"]
   #   pull_request:
   #     branches: [ "main" ]
 
