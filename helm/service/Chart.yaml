@@ -1,4 +1,5 @@
 apiVersion: v2
 name: smokeping-chart
 version: 0.1.0
+appVersion: "1.0.0"     # the image tag; the image workflow builds this version
 description: A Helm chart for deploying Smokeping with an existing or configured InfluxDB and Grafana
