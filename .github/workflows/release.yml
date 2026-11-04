@@ -1,0 +1,117 @@
+# Releases one version of Smokeping: the image, then the Helm chart, both
+# versioned by the release tag. To release: Releases → "Draft a new release" →
+# tag vX.Y.Z → Publish. A version that's already published is never overwritten.
+
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write       # GHCR push with GITHUB_TOKEN
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: sjultra/smokeping
+      GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/smokeping
+      CHARTS: oci://ghcr.io/${{ github.repository_owner }}/charts
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Read version
+        id: version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="${TAG#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::release tag must be vX.Y.Z, got $TAG"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "chart=$(yq '.name' helm/service/Chart.yaml)" >> "$GITHUB_OUTPUT"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.19.0
+
+      - name: Log in to GHCR (Helm)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # image: build (neither registry has it) | copy (only Docker Hub does: a
+      # run that failed pushing to GHCR) | done. chart: publish unless it exists.
+      # So a failed release can simply be re-run.
+      - name: Check version
+        id: check
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          CHART: ${{ steps.version.outputs.chart }}
+        run: |
+          has() { docker manifest inspect "$1" >/dev/null 2>&1; }
+          if has "$IMAGE:$VERSION" && has "$GHCR_IMAGE:$VERSION"; then
+            echo "image=done" >> "$GITHUB_OUTPUT"
+          elif has "$IMAGE:$VERSION"; then
+            echo "image=copy" >> "$GITHUB_OUTPUT"
+          else
+            echo "image=build" >> "$GITHUB_OUTPUT"
+          fi
+          if helm show chart "$CHARTS/$CHART" --version "$VERSION" >/dev/null 2>&1; then
+            echo "::notice::$CHART $VERSION is already published; release a new version to publish"
+            echo "chart=done" >> "$GITHUB_OUTPUT"
+          else
+            echo "chart=publish" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.check.outputs.image != 'done'
+        uses: docker/setup-buildx-action@v3
+
+      # the same image, not a rebuild: both registries end up with one digest
+      - name: Copy image to GHCR
+        if: steps.check.outputs.image == 'copy'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          docker buildx imagetools create -t "$GHCR_IMAGE:$VERSION" "$IMAGE:$VERSION"
+          docker buildx imagetools create -t "$GHCR_IMAGE:latest" "$IMAGE:$VERSION"
+
+      - name: Build and push image
+        if: steps.check.outputs.image == 'build'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
+            ${{ env.IMAGE }}:latest
+            ${{ env.GHCR_IMAGE }}:${{ steps.version.outputs.version }}
+            ${{ env.GHCR_IMAGE }}:latest
+
+      # after the image, so the chart never points at an image that doesn't exist
+      - name: Publish chart
+        if: steps.check.outputs.chart == 'publish'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          CHART: ${{ steps.version.outputs.chart }}
+        run: |
+          helm lint helm/service
+          helm package helm/service --version "$VERSION" --app-version "$VERSION"
+          helm push "$CHART-$VERSION.tgz" "$CHARTS"
