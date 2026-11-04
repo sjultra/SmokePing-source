@@ -1,0 +1,13 @@
+{{- if .Values.smokeping.metrics.enabled }}
+# loaded by Grafana's dashboard sidecar (Monitoring) from any namespace; removed with the release
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smokeping-dashboard
+  labels:
+    app: smokeping
+    grafana_dashboard: "1"
+data:
+  smokeping.json: |-
+    {{- .Files.Get "files/smokeping.json" | nindent 4 }}
+{{- end }}

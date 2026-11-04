@@ -26,19 +26,21 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.influxdb.create }}
-      initContainers:
-        - name: influxdb-wait
-          image: busybox:1.34.0
-          imagePullPolicy: IfNotPresent
-          command: ["sh", "-c", "until nslookup influxdb; do sleep 2; done"]
-      {{- end }}
       containers:
         - name: smokeping
           image: "{{ .Values.smokeping.image.repository }}:{{ .Values.smokeping.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.smokeping.image.pullPolicy }}
           ports:
             - containerPort: 80
+          {{- with .Values.smokeping.metrics }}
+          {{- if .enabled }}
+          env:                    # init.sh adds the *** InfluxDB *** section from these
+            - name: INFLUXDB_HOST
+              value: {{ .host | quote }}
+            - name: INFLUXDB_PORT
+              value: {{ .port | quote }}
+          {{- end }}
+          {{- end }}
           volumeMounts:
             - name: smokeping-data
               mountPath: /data            # the RRD files behind the graphs (`datadir` in config/config)

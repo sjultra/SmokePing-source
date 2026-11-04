@@ -2,4 +2,4 @@ apiVersion: v2
 name: smokeping
 version: 0.0.0          # set from the release tag (vX.Y.Z) when published; see .github/workflows/release.yml
 appVersion: "0.0.0"     # the image tag; set from the same release tag
-description: A Helm chart for deploying Smokeping with an existing or configured InfluxDB and Grafana
+description: Smokeping, which also pushes its measurements to Monitoring, with a Grafana dashboard

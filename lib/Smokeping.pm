@@ -2203,15 +2203,13 @@ sub update_influxdb($$$$$) {
     #first 3 data points are as follows
     $idata{uptime} = sprintf('%e', $measurements[0]) if($measurements[0] ne "U");
 
-    #if loss is indexed, it's easily searchable, but doesn't show up in Grafana graphs
-    #so save it both ways (loss is an integer, no need to make it float)
+    #loss is a field only: as a tag, every loss value would start a new series
+    #(loss is an integer, no need to make it float)
     #loss is always a number, even when all other are unreachable, so no special treatment
     my $loss = $measurements[1];
-    $itags{loss} = $loss;
     $idata{loss} = $loss;
     #calculate loss as a percentage as well
     my $loss_percent = int($loss/$pings*100);
-    $itags{loss_percent} = $loss_percent;
     $idata{loss_percent} = $loss_percent;
 
     $idata{median} = sprintf('%e', $measurements[2]) if($measurements[2] ne "U");

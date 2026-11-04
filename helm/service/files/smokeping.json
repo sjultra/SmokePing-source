@@ -1,0 +1,49 @@
+{
+  "uid": "smokeping",
+  "title": "Smokeping",
+  "tags": ["smokeping"],
+  "schemaVersion": 39,
+  "editable": true,
+  "time": { "from": "now-24h", "to": "now" },
+  "refresh": "1m",
+  "templating": {
+    "list": [
+      {
+        "name": "target",
+        "label": "Target",
+        "type": "query",
+        "query": { "query": "label_values(FPing_median, host)", "refId": "target" },
+        "definition": "label_values(FPing_median, host)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1, "type": "timeseries", "title": "Median latency",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 9 },
+      "targets": [{ "refId": "A", "expr": "FPing_median{host=~\"$target\"}", "legendFormat": "{{host}}" }],
+      "fieldConfig": { "defaults": { "unit": "s", "min": 0, "custom": { "spanNulls": true } }, "overrides": [] }
+    },
+    {
+      "id": 2, "type": "timeseries", "title": "Packet loss",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 9 },
+      "targets": [{ "refId": "A", "expr": "FPing_loss_percent{host=~\"$target\"}", "legendFormat": "{{host}}" }],
+      "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "custom": { "spanNulls": true } }, "overrides": [] }
+    },
+    {
+      "id": 3, "type": "timeseries", "title": "$target",
+      "repeat": "target", "repeatDirection": "h", "maxPerRow": 3,
+      "gridPos": { "x": 0, "y": 9, "w": 8, "h": 8 },
+      "targets": [
+        { "refId": "A", "expr": "FPing_max{host=~\"$target\"}", "legendFormat": "max" },
+        { "refId": "B", "expr": "FPing_median{host=~\"$target\"}", "legendFormat": "median" },
+        { "refId": "C", "expr": "FPing_min{host=~\"$target\"}", "legendFormat": "min" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s", "min": 0, "custom": { "spanNulls": true } }, "overrides": [] }
+    }
+  ]
+}
