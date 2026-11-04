@@ -11,6 +11,10 @@ smokeping:
   ingress:
     enabled: false                        # true = public at https://<host>; TLS is terminated by nginx on the proxy host
     host: ""                              # required when enabled
+  targets:                                # hosts to ping (names or IPv4 addresses); empty = the image's own config
+    - 1.1.1.1
+    - 8.8.8.8
+    - google.com
   metrics:                                # also push every measurement to Monitoring, with a Grafana dashboard
     enabled: true
     host: ingest.victoriametrics.svc      # Monitoring's ingest endpoint (InfluxDB line protocol)

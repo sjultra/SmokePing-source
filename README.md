@@ -55,6 +55,9 @@ A default smokeping configuration can be found in `config/config`.
 The Smokeping UI is enabled by default and is configured with `config/smokeping.conf`
 
 
+## Choose the hosts to ping
+Set `TARGETS` (host names or IPv4 addresses, separated by spaces) and `init.sh` replaces the config's Targets section with one entry per host, for both the probes and the web UI. The Helm chart sets it from `smokeping.targets`.
+
 ## Push measurements to InfluxDB or VictoriaMetrics
 Set `INFLUXDB_HOST` and every measurement is also written as InfluxDB line protocol (`init.sh` adds the `*** InfluxDB ***` section to the config). Optional: `INFLUXDB_PORT` (8086), `INFLUXDB_DATABASE` (smokeping), `INFLUXDB_TIMEOUT` (5 seconds).
 

@@ -32,15 +32,19 @@ spec:
           imagePullPolicy: {{ .Values.smokeping.image.pullPolicy }}
           ports:
             - containerPort: 80
-          {{- with .Values.smokeping.metrics }}
-          {{- if .enabled }}
-          env:                    # init.sh adds the *** InfluxDB *** section from these
+          env:                    # init.sh builds the config from these
+            {{- with .Values.smokeping.targets }}
+            - name: TARGETS
+              value: {{ join " " . | quote }}
+            {{- end }}
+            {{- with .Values.smokeping.metrics }}
+            {{- if .enabled }}
             - name: INFLUXDB_HOST
               value: {{ .host | quote }}
             - name: INFLUXDB_PORT
               value: {{ .port | quote }}
-          {{- end }}
-          {{- end }}
+            {{- end }}
+            {{- end }}
           volumeMounts:
             - name: smokeping-data
               mountPath: /data            # the RRD files behind the graphs (`datadir` in config/config)
