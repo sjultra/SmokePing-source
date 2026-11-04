@@ -1,6 +1,9 @@
 # Releases one version of Smokeping: the image, then the Helm chart, both
 # versioned by the release tag. To release: Releases → "Draft a new release" →
 # tag vX.Y.Z → Publish. A version that's already published is never overwritten.
+#
+# Each architecture builds natively on its own runner, in parallel (emulating
+# arm64 on amd64 takes ~10x longer); the release job joins them into one tag.
 
 name: Release
 
@@ -12,13 +15,19 @@ permissions:
   contents: read
   packages: write       # GHCR push with GITHUB_TOKEN
 
+env:
+  IMAGE: sjultra/smokeping
+  GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/smokeping
+  CHARTS: oci://ghcr.io/${{ github.repository_owner }}/charts
+
 jobs:
-  release:
+  check:
     runs-on: ubuntu-latest
-    env:
-      IMAGE: sjultra/smokeping
-      GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/smokeping
-      CHARTS: oci://ghcr.io/${{ github.repository_owner }}/charts
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      chart: ${{ steps.version.outputs.chart }}
+      image: ${{ steps.check.outputs.image }}
+      publish-chart: ${{ steps.check.outputs.chart }}
     steps:
       - uses: actions/checkout@v5
 
@@ -35,25 +44,9 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "chart=$(yq '.name' helm/service/Chart.yaml)" >> "$GITHUB_OUTPUT"
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - uses: azure/setup-helm@v4
         with:
           version: v3.19.0
-
-      - name: Log in to GHCR (Helm)
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
       # image: build (neither registry has it) | copy (only Docker Hub does: a
       # run that failed pushing to GHCR) | done. chart: publish unless it exists.
@@ -79,45 +72,117 @@ jobs:
             echo "chart=publish" >> "$GITHUB_OUTPUT"
           fi
 
-      # arm64 is emulated on the amd64 runner
-      - name: Set up QEMU
-        if: steps.check.outputs.image == 'build'
-        uses: docker/setup-qemu-action@v3
+  # one image per architecture, pushed by digest only (no tag yet)
+  build:
+    needs: check
+    if: needs.check.outputs.image == 'build'
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
 
-      - name: Set up Docker Buildx
-        if: steps.check.outputs.image != 'done'
-        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # the same image, not a rebuild: both registries end up with one digest
-      - name: Copy image to GHCR
-        if: steps.check.outputs.image == 'copy'
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          docker buildx imagetools create -t "$GHCR_IMAGE:$VERSION" "$IMAGE:$VERSION"
-          docker buildx imagetools create -t "$GHCR_IMAGE:latest" "$IMAGE:$VERSION"
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
 
       - name: Build and push image
-        if: steps.check.outputs.image == 'build'
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./docker/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
-            ${{ env.IMAGE }}:latest
-            ${{ env.GHCR_IMAGE }}:${{ steps.version.outputs.version }}
-            ${{ env.GHCR_IMAGE }}:latest
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,"name=${{ env.IMAGE }},${{ env.GHCR_IMAGE }}",push-by-digest=true,name-canonical=true,push=true
+
+      - name: Save digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p digests
+          touch "digests/${DIGEST#sha256:}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ strategy.job-index }}
+          path: digests/*
+          retention-days: 1
+
+  release:
+    needs: [check, build]
+    # runs when build ran and passed, or was skipped (image already published)
+    if: ${{ !cancelled() && !failure() }}
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.check.outputs.version }}
+      CHART: ${{ needs.check.outputs.chart }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: actions/download-artifact@v4
+        if: needs.check.outputs.image == 'build'
+        with:
+          path: digests
+          pattern: digest-*
+          merge-multiple: true
+
+      # one multi-arch tag over both architectures' images, in each registry
+      - name: Tag image
+        if: needs.check.outputs.image == 'build'
+        working-directory: digests
+        run: |
+          for image in "$IMAGE" "$GHCR_IMAGE"; do
+            docker buildx imagetools create -t "$image:$VERSION" -t "$image:latest" $(printf "$image@sha256:%s " *)
+          done
+
+      # the same image, not a rebuild: both registries end up with one digest
+      - name: Copy image to GHCR
+        if: needs.check.outputs.image == 'copy'
+        run: |
+          docker buildx imagetools create -t "$GHCR_IMAGE:$VERSION" "$IMAGE:$VERSION"
+          docker buildx imagetools create -t "$GHCR_IMAGE:latest" "$IMAGE:$VERSION"
+
+      - uses: azure/setup-helm@v4
+        if: needs.check.outputs.publish-chart == 'publish'
+        with:
+          version: v3.19.0
 
       # after the image, so the chart never points at an image that doesn't exist
       - name: Publish chart
-        if: steps.check.outputs.chart == 'publish'
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          CHART: ${{ steps.version.outputs.chart }}
+        if: needs.check.outputs.publish-chart == 'publish'
         run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
           helm lint helm/service
           helm package helm/service --version "$VERSION" --app-version "$VERSION"
           helm push "$CHART-$VERSION.tgz" "$CHARTS"
