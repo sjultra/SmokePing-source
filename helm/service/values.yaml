@@ -20,7 +20,6 @@ smokeping:
     size: 1Gi
 
   # deployment target(s)
-  nodeSelector:
-    kubernetes.io/arch: amd64             # the image is amd64-only
+  nodeSelector: {}                        # the image is amd64 + arm64
   affinity: {}
   tolerations: []
